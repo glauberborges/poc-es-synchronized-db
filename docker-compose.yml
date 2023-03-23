@@ -1,0 +1,115 @@
+#  sudo sysctl -w vm.max_map_count=262144
+version: '2.2'
+services:
+
+  poc-es-synchronized-db-es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.1
+    container_name: poc-es-synchronized-db-es01
+    restart: always
+    mem_limit: 2g
+    environment:
+      - ingest.geoip.downloader.enabled=false
+      - node.name=poc-es-synchronized-db-es01
+      - cluster.name=poc-es-docker-cluster
+      - discovery.seed_hosts=poc-es-synchronized-db-es02
+      - cluster.initial_master_nodes=poc-es-synchronized-db-es01,poc-es-synchronized-db-es02
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - poc-es-synchronized-db-dataes01:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - oms-poc-es-synchronized-db-network
+
+  poc-es-synchronized-db-es02:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.16.1
+      container_name: poc-es-synchronized-db-es02
+      restart: always
+      mem_limit: 2g
+      environment:
+        - ingest.geoip.downloader.enabled=false
+        - node.name=poc-es-synchronized-db-es02
+        - cluster.name=poc-es-docker-cluster
+        - discovery.seed_hosts=poc-es-synchronized-db-es01
+        - cluster.initial_master_nodes=poc-es-synchronized-db-es01,poc-es-synchronized-db-es02
+        - bootstrap.memory_lock=true
+        - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - poc-es-synchronized-db-dataes02:/usr/share/elasticsearch/data
+      networks:
+        - oms-poc-es-synchronized-db-network
+
+  poc-es-synchronized-db-kib01:
+      image: docker.elastic.co/kibana/kibana:7.16.1
+      container_name: poc-es-synchronized-db-kib01
+      restart: always
+      mem_limit: 1g
+      ports:
+        - "5601:5601"
+      environment:
+        ELASTICSEARCH_URL: http://poc-es-synchronized-db-es01:9200
+        ELASTICSEARCH_HOSTS: '["http://poc-es-synchronized-db-es01:9200","http://poc-es-synchronized-db-es02:9200"]'
+      networks:
+        - oms-poc-es-synchronized-db-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.16.1
+    container_name: poc-es-synchronized-db-logstash01
+    depends_on:
+      - database
+      - poc-es-synchronized-db-es01
+      - poc-es-synchronized-db-es02
+    environment:
+      - pipeline.ecs_compatibility=disabled
+#      - ELASTICSEARCH_HOSTS=http://poc-es-synchronized-db-es01:9200
+      - XPACK_MONITORING_ELASTICSEARCH_HOSTS=http://poc-es-synchronized-db-es01:9200
+#      - ELASTICSEARCH_USERNAME=
+#      - ELASTICSEARCH_PASSWORD=
+      - XPACK_MONITORING_ENABLED=false
+#      - LS_JAVA_OPTS="-Xmx256m -Xms256m"
+    volumes:
+#      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+      - ./logstash/pipelines:/usr/share/logstash/pipelines
+      - ./file.log:/usr/share/log/file.log
+#      - ./mysql-connector-j-8.0.32.jar:/usr/share/logstash/mysql-connector-j-8.0.32.jar
+    ports:
+      - "5044:5044"
+    networks:
+      - oms-poc-es-synchronized-db-network
+
+  database:
+    image: mysql:8.0
+    command: --sql_mode="NO_ENGINE_SUBSTITUTION"
+    volumes:
+      - .data/mysql:/var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=oms-poc-es-synchronized-db"
+      - "MYSQL_USER=secret"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "TZ=America/Sao_Paulo"
+    ports:
+      - "3306:3306"
+    networks:
+      - oms-poc-es-synchronized-db-network
+
+
+networks:
+  oms-poc-es-synchronized-db-network:
+    driver: bridge
+
+volumes:
+  poc-es-synchronized-db-dataes01:
+    driver: local
+  poc-es-synchronized-db-dataes02:
+    driver: local

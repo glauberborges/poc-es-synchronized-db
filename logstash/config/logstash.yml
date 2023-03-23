@@ -1,0 +1,4 @@
+http.host: 0.0.0.0
+pipeline.ecs_compatibility: disabled
+xpack.monitoring.elasticsearch.hosts: "http://poc-es-synchronized-db-es01:9200"
+xpack.monitoring.enabled: false
