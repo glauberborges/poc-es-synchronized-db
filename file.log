@@ -1,2 +1,1 @@
-{"index": {"_id": "1", "_index": "rdbms_sync_idx"}}
-{"client_name": "name file"}
+{"id": "1","client_name": "name file"}

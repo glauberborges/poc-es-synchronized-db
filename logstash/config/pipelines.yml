@@ -2,7 +2,9 @@
 # For more information on multiple pipelines, see the documentation:
 #   https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html
 
-- pipeline.id: main
-  path.config: "/usr/share/logstash/pipelines/main.conf"
-- pipeline.id: teste
-  path.config: "/usr/share/logstash/pipelines/teste.conf"
+#- pipeline.id: main
+#  path.config: "/usr/share/logstash/pipelines/main.conf"
+#- pipeline.id: teste
+#  path.config: "/usr/share/logstash/pipelines/teste.conf"
+- pipeline.id: es_table-to-es
+  path.config: "/usr/share/logstash/pipelines/es_table-to-es.conf"

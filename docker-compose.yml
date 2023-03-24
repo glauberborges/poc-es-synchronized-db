@@ -81,7 +81,7 @@ services:
       - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
       - ./logstash/pipelines:/usr/share/logstash/pipelines
       - ./file.log:/usr/share/log/file.log
-#      - ./mysql-connector-j-8.0.32.jar:/usr/share/logstash/mysql-connector-j-8.0.32.jar
+      - ./mysql-connector-j-8.0.32.jar:/usr/share/logstash/mysql-connector-j-8.0.32.jar
     ports:
       - "5044:5044"
     networks:
